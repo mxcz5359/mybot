@@ -1,67 +1,37 @@
-import os
-from telegram.ext import Updater, CommandHandler, CallbackContext
 from telegram import Update
+from telegram.ext import Application, CommandHandler, CallbackContext
 
-# 从环境变量中读取 BOT_TOKEN
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-if not BOT_TOKEN:
-    print("错误：请设置 BOT_TOKEN 环境变量！")
-    exit()
+BOT_TOKEN = "8146979262:AAF0DbqC1h2X7DEbeMXec23TPQOwULJed8U"
 
-ALLOWED_USER_IDS = [
-   6236467292,
-]
-
-def is_user_allowed(user_id):
-    """检查用户 ID 是否在白名单中"""
-    return user_id in ALLOWED_USER_IDS
-
-def start_command(update: Update, context: CallbackContext) -> None:
-    """处理 /start 命令，显示用户ID，并检查权限"""
+async def start_command(update: Update, context: CallbackContext) -> None:
+    """处理 /start 命令，显示用户ID"""
     user_id = update.message.from_user.id
-    if not is_user_allowed(user_id):
-        update.message.reply_text("抱歉，你没有权限使用此机器人。")
-        return  # 权限不足，直接返回，不执行后续操作
+    await update.message.reply_text(f"你的用户ID是: {user_id}")
 
-    update.message.reply_text(f"你的用户ID是: {user_id}")
+async def profile_command(update: Update, context: CallbackContext) -> None:
+    """处理 /profile 命令，显示机器人Token"""
+    await update.message.reply_text(f"机器人API Token: {BOT_TOKEN}")
 
-def profile_command(update: Update, context: CallbackContext) -> None:
-    """处理 /profile 命令，显示机器人Token，并检查权限"""
-    user_id = update.message.from_user.id
-    if not is_user_allowed(user_id):
-        update.message.reply_text("抱歉，你没有权限使用此命令。")
-        return
-
-    # 安全提示：实际应用中不建议直接返回完整的 BOT_TOKEN
-    update.message.reply_text(f"机器人API Token (已隐藏部分): {BOT_TOKEN[:8]}...")
-
-def help_command(update: Update, context: CallbackContext) -> None:
-    """处理 /help 命令，并检查权限"""
-    user_id = update.message.from_user.id
-    if not is_user_allowed(user_id):
-        update.message.reply_text("抱歉，你没有权限查看帮助信息。")
-        return
-
+async def help_command(update: Update, context: CallbackContext) -> None:
+    """处理 /help 命令"""
     help_text = """
     可用命令：
     /start - 显示你的用户ID
-    /profile - 显示机器人API Token (仅显示部分)
+    /profile - 显示机器人API Token
     """
-    update.message.reply_text(help_text)
-
+    await update.message.reply_text(help_text)
 
 def main() -> None:
-    """启动机器人"""
-    updater = Updater(BOT_TOKEN, use_context=True)
-    dispatcher = updater.dispatcher
+    """启动机器人（适用于 python-telegram-bot 20+）"""
+    app = Application.builder().token(BOT_TOKEN).build()
 
     # 注册命令处理器
-    dispatcher.add_handler(CommandHandler("start", start_command))
-    dispatcher.add_handler(CommandHandler("profile", profile_command))
-    dispatcher.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("start", start_command))
+    app.add_handler(CommandHandler("profile", profile_command))
+    app.add_handler(CommandHandler("help", help_command))
 
-    updater.start_polling()
-    updater.idle()
+    # 启动轮询
+    app.run_polling()
 
 if __name__ == '__main__':
     main()
